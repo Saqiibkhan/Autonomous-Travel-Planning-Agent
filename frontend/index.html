@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Planner</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 1.5rem; }
+        .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+        input, textarea, select { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        #result { white-space: pre-wrap; line-height: 1.6; }
+        .error { color: #dc2626; }
+        .note { color: #4b5563; font-size: 0.9rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Autonomous Travel Planner</h1>
+        <div class="card">
+            <form id="planForm">
+                <label for="destination">Destination</label>
+                <input type="text" id="destination" required placeholder="e.g. Hunza, Skardu, Paris">
+
+                <label for="budget">Budget (PKR)</label>
+                <input type="number" id="budget" required min="1" placeholder="e.g. 150000">
+
+                <label for="duration">Duration (days)</label>
+                <input type="number" id="duration" required min="1" max="30" value="5">
+
+                <label for="travelers">Travelers</label>
+                <input type="number" id="travelers" required min="1" max="20" value="1">
+
+                <label for="origin">Origin (optional)</label>
+                <input type="text" id="origin" placeholder="e.g. Karachi">
+
+                <label for="preferences">Preferences (optional)</label>
+                <textarea id="preferences" rows="2" placeholder="e.g. avoid hiking, prefer museums"></textarea>
+
+                <button type="submit" id="submitBtn">Plan Trip</button>
+            </form>
+        </div>
+
+        <div class="card" id="resultCard" style="display:none">
+            <h2>Your Itinerary</h2>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('planForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultCard = document.getElementById('resultCard');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Planning...';
+            resultCard.style.display = 'none';
+
+            const payload = {
+                destination: document.getElementById('destination').value,
+                budget: parseFloat(document.getElementById('budget').value),
+                duration_days: parseInt(document.getElementById('duration').value, 10),
+                num_travelers: parseInt(document.getElementById('travelers').value, 10),
+                origin: document.getElementById('origin').value || undefined,
+                preferences: document.getElementById('preferences').value || undefined,
+            };
+
+            try {
+                const res = await fetch('/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`Server error ${res.status}: ${text}`);
+                }
+
+                const data = await res.json();
+                let html = '<h3>Itinerary</h3>' + (data.itinerary || '').replace(/\n/g, '<br>');
+
+                if (data.reflection_notes && data.reflection_notes.length) {
+                    html += '<h3>Notes</h3><ul>';
+                    data.reflection_notes.forEach(n => html += `<li>${n}</li>`);
+                    html += '</ul>';
+                }
+
+                resultDiv.innerHTML = html;
+                resultCard.style.display = 'block';
+            } catch (err) {
+                resultDiv.innerHTML = `<p class="error">Failed: ${err.message}</p>`;
+                resultCard.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Plan Trip';
+            }
+        });
+    </script>
+</body>
+</html>

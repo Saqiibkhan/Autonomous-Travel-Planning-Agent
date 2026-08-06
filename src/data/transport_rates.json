@@ -1,0 +1,22 @@
+{
+    "bus": {
+        "price_per_km": 6,
+        "description": "Public bus / coach"
+    },
+    "car": {
+        "price_per_km": 35,
+        "description": "Private car (fuel + maintenance)"
+    },
+    "bike": {
+        "price_per_km": 12,
+        "description": "Motorcycle / bike"
+    },
+    "driving": {
+        "price_per_km": 30,
+        "description": "General driving (legacy alias for car)"
+    },
+    "public": {
+        "price_per_km": 12,
+        "description": "Public transport (legacy alias)"
+    }
+}
